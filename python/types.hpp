@@ -1,8 +1,9 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
-#include <boost/python.hpp>
-#include <boost/python/numpy.hpp>
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 #include <algorithm>
 #include <vector>
@@ -11,26 +12,24 @@
 
 namespace pyopengv {
 
-namespace bp = boost::python;
+namespace bp = pybind11;
 
-namespace bpn = boost::python::numpy;
-typedef bpn::ndarray ndarray;
+namespace bpn = pybind11;
+typedef bpn::array ndarray;
 
 template <typename T>
 bp::object bpn_array_from_data(const T *data, int shape0) {
-  bp::tuple shape = bp::make_tuple(shape0);
-  bpn::dtype dtype =  bpn::dtype::get_builtin<T>();
-  bpn::ndarray res = bpn::empty(shape, dtype);
-  std::copy(data, data + shape0, reinterpret_cast<T*>(res.get_data()));
+  auto res = bpn::array_t<T>(shape0);
+  auto ptr = static_cast<T *>(res.mutable_data());
+  std::copy(data, data + shape0, ptr);
   return res;
 }
 
 template <typename T>
 bp::object bpn_array_from_data(const T *data, int shape0, int shape1) {
-  bp::tuple shape = bp::make_tuple(shape0, shape1);
-  bpn::dtype dtype =  bpn::dtype::get_builtin<T>();
-  bpn::ndarray res = bpn::empty(shape, dtype);
-  std::copy(data, data + shape0 * shape1, reinterpret_cast<T*>(res.get_data()));
+  auto res = bpn::array_t<T>({shape0, shape1});
+  auto ptr = static_cast<T *>(res.mutable_data());
+  std::copy(data, data + shape0 * shape1, ptr);
   return res;
 }
 
@@ -44,33 +43,25 @@ template<typename T>
 class PyArrayContiguousView {
  public:
   PyArrayContiguousView(ndarray &array)
-      : contiguous_(bpn::from_object(
-            array,
-            bpn::dtype::get_builtin<T>(),
-            0,
-            0,
-            bpn::ndarray::C_CONTIGUOUS)) {}
+    : contiguous_(to_contiguous(array))
+      , buffer_(contiguous_.request()) {}
 
   PyArrayContiguousView(const bp::object &object)
-      : contiguous_(bpn::from_object(
-            object,
-            bpn::dtype::get_builtin<T>(),
-            0,
-            0,
-            bpn::ndarray::C_CONTIGUOUS)) {}
+    : contiguous_(to_contiguous(object.cast<ndarray>()))
+      , buffer_(contiguous_.request()) {}
 
   ~PyArrayContiguousView() {}
 
   const T *data() const {
-    return reinterpret_cast<const T *>(contiguous_.get_data());
+    return static_cast<const T *>(buffer_.ptr);
   }
 
   int ndim() const {
-    return contiguous_.get_nd();
+    return buffer_.ndim;
   }
 
   int shape(int dim) const {
-    return contiguous_.shape(dim);
+    return static_cast<int>(buffer_.shape[dim]);
   }
 
   bool valid() const {
@@ -90,7 +81,17 @@ class PyArrayContiguousView {
   }
 
  private:
-  ndarray contiguous_;
+  static bpn::array_t<T, bpn::array::c_style | bpn::array::forcecast>
+  to_contiguous(const ndarray &array) {
+    auto view = bpn::array_t<T, bpn::array::c_style | bpn::array::forcecast>::ensure(array);
+    if (!view) {
+      throw bpn::type_error("Unable to convert array to required contiguous dtype");
+    }
+    return view;
+  }
+
+  bpn::array_t<T, bpn::array::c_style | bpn::array::forcecast> contiguous_;
+  bpn::buffer_info buffer_;
 };
 
 }

@@ -1,4 +1,3 @@
-#include <boost/python.hpp>
 #include <iostream>
 #include <vector>
 #include <opengv/absolute_pose/AbsoluteAdapterBase.hpp>
@@ -840,41 +839,36 @@ bp::object triangulate2( ndarray &b1,
 
 } // namespace pyopengv
 
-BOOST_PYTHON_MODULE(pyopengv) {
-  using namespace boost::python;
+PYBIND11_MODULE(pyopengv, m) {
+  m.def("absolute_pose_p2p", pyopengv::absolute_pose::p2p);
+  m.def("absolute_pose_p3p_kneip", pyopengv::absolute_pose::p3p_kneip);
+  m.def("absolute_pose_p3p_gao", pyopengv::absolute_pose::p3p_gao);
+  m.def("absolute_pose_gp3p", pyopengv::absolute_pose::gp3p);
+  m.def("absolute_pose_epnp", pyopengv::absolute_pose::epnp);
+  m.def("absolute_pose_gpnp", pyopengv::absolute_pose::gpnp);
+  m.def("absolute_pose_upnp", pyopengv::absolute_pose::upnp);
+  m.def("absolute_pose_optimize_nonlinear", pyopengv::absolute_pose::optimize_nonlinear);
+  m.def("absolute_pose_ransac", pyopengv::absolute_pose::ransac);
 
-  boost::python::numpy::initialize();
+  m.def("relative_pose_twopt", pyopengv::relative_pose::twopt);
+  m.def("relative_pose_twopt_rotation_only", pyopengv::relative_pose::twopt_rotationOnly);
+  m.def("relative_pose_rotation_only", pyopengv::relative_pose::rotationOnly);
+  m.def("relative_pose_fivept_nister", pyopengv::relative_pose::fivept_nister);
+  m.def("relative_pose_fivept_kneip", pyopengv::relative_pose::fivept_kneip);
+  m.def("relative_pose_sevenpt", pyopengv::relative_pose::sevenpt);
+  m.def("relative_pose_eightpt", pyopengv::relative_pose::eightpt);
+  m.def("relative_pose_eigensolver", pyopengv::relative_pose::eigensolver);
+  m.def("relative_pose_sixpt", pyopengv::relative_pose::sixpt);
+  m.def("relative_pose_optimize_nonlinear", pyopengv::relative_pose::optimize_nonlinear);
+  m.def("relative_pose_ransac", pyopengv::relative_pose::ransac);
+  m.def("relative_pose_ransac_rotation_only", pyopengv::relative_pose::ransac_rotationOnly);
 
-  def("absolute_pose_p2p", pyopengv::absolute_pose::p2p);
-  def("absolute_pose_p3p_kneip", pyopengv::absolute_pose::p3p_kneip);
-  def("absolute_pose_p3p_gao", pyopengv::absolute_pose::p3p_gao);
-  def("absolute_pose_gp3p", pyopengv::absolute_pose::gp3p);
-  def("absolute_pose_epnp", pyopengv::absolute_pose::epnp);
-  def("absolute_pose_gpnp", pyopengv::absolute_pose::gpnp);
-  def("absolute_pose_upnp", pyopengv::absolute_pose::upnp);
-  def("absolute_pose_optimize_nonlinear", pyopengv::absolute_pose::optimize_nonlinear);
-  def("absolute_pose_ransac", pyopengv::absolute_pose::ransac);
+  m.def("triangulation_triangulate", pyopengv::triangulation::triangulate);
+  m.def("triangulation_triangulate2", pyopengv::triangulation::triangulate2);
 
-  def("relative_pose_twopt", pyopengv::relative_pose::twopt);
-  def("relative_pose_twopt_rotation_only", pyopengv::relative_pose::twopt_rotationOnly);
-  def("relative_pose_rotation_only", pyopengv::relative_pose::rotationOnly);
-  def("relative_pose_fivept_nister", pyopengv::relative_pose::fivept_nister);
-  def("relative_pose_fivept_kneip", pyopengv::relative_pose::fivept_kneip);
-  def("relative_pose_sevenpt", pyopengv::relative_pose::sevenpt);
-  def("relative_pose_eightpt", pyopengv::relative_pose::eightpt);
-  def("relative_pose_eigensolver", pyopengv::relative_pose::eigensolver);
-  def("relative_pose_sixpt", pyopengv::relative_pose::sixpt);
-  def("relative_pose_optimize_nonlinear", pyopengv::relative_pose::optimize_nonlinear);
-  def("relative_pose_ransac", pyopengv::relative_pose::ransac);
-  def("relative_pose_ransac_rotation_only", pyopengv::relative_pose::ransac_rotationOnly);
-
-  def("triangulation_triangulate", pyopengv::triangulation::triangulate);
-  def("triangulation_triangulate2", pyopengv::triangulation::triangulate2);
-
-  def("absolute_pose_noncentral_gp3p", pyopengv::absolute_pose_noncentral::gp3p);
-  def("absolute_pose_noncentral_gpnp", pyopengv::absolute_pose_noncentral::gpnp);
-  def("absolute_pose_noncentral_upnp", pyopengv::absolute_pose_noncentral::upnp);
-  def("absolute_pose_noncentral_optimize_nonlinear", pyopengv::absolute_pose_noncentral::optimize_nonlinear);
-  def("absolute_pose_noncentral_ransac", pyopengv::absolute_pose_noncentral::ransac);
-
+  m.def("absolute_pose_noncentral_gp3p", pyopengv::absolute_pose_noncentral::gp3p);
+  m.def("absolute_pose_noncentral_gpnp", pyopengv::absolute_pose_noncentral::gpnp);
+  m.def("absolute_pose_noncentral_upnp", pyopengv::absolute_pose_noncentral::upnp);
+  m.def("absolute_pose_noncentral_optimize_nonlinear", pyopengv::absolute_pose_noncentral::optimize_nonlinear);
+  m.def("absolute_pose_noncentral_ransac", pyopengv::absolute_pose_noncentral::ransac);
 }

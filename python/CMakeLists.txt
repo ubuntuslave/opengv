@@ -1,36 +1,33 @@
 
-option(BUILD_FOR_PYTHON3 "build pyopengv for Python 3" OFF)
-set(BOOST_PYTHON3_COMPONENT "python3" CACHE STRING "name of the Boost Python 3 component (python3, python-py36 or python-py37)")
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+find_package(pybind11 CONFIG QUIET)
 
-if(${BUILD_FOR_PYTHON3})
-    set(BOOST_PYTHON_COMPONENT ${BOOST_PYTHON3_COMPONENT})
-    set(BOOST_NUMPY_COMPONENT numpy3)
-    set(Python_ADDITIONAL_VERSIONS 3.7 3.6)
-    set(Python_VERSION_SUFFIX 3)
-else()
-    set(BOOST_PYTHON_COMPONENT python)
-    set(BOOST_NUMPY_COMPONENT numpy)
-    set(Python_ADDITIONAL_VERSIONS 2.7)
-    set(Python_VERSION_SUFFIX "")
+if(NOT pybind11_FOUND)
+    execute_process(
+        COMMAND "${Python3_EXECUTABLE}" -m pybind11 --cmakedir
+        OUTPUT_VARIABLE PYBIND11_CMAKEDIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE PYBIND11_CMAKEDIR_RESULT
+    )
+
+    if(PYBIND11_CMAKEDIR_RESULT EQUAL 0 AND EXISTS "${PYBIND11_CMAKEDIR}")
+        list(APPEND CMAKE_PREFIX_PATH "${PYBIND11_CMAKEDIR}")
+        find_package(pybind11 CONFIG REQUIRED)
+    else()
+        message(FATAL_ERROR
+            "pybind11 not found. Install it in the selected Python environment "
+            "(e.g. '${Python3_EXECUTABLE} -m pip install pybind11') or provide pybind11_DIR.")
+    endif()
 endif()
 
-find_package(Boost 1.63 REQUIRED COMPONENTS
-             ${BOOST_PYTHON_COMPONENT} ${BOOST_NUMPY_COMPONENT})
+message(STATUS "pyopengv Python executable: ${Python3_EXECUTABLE}")
+message(STATUS "pyopengv Python include dirs: ${Python3_INCLUDE_DIRS}")
 
-include_directories(${Boost_INCLUDE_DIRS})
-
-find_package(PythonLibs ${Python_VERSION_SUFFIX} REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
-
-find_package(NumPy REQUIRED)
-include_directories(${NUMPY_INCLUDE_DIRS})
-
-add_library(pyopengv SHARED pyopengv.cpp)
-target_link_libraries(pyopengv opengv)
+add_library(pyopengv MODULE pyopengv.cpp)
+target_link_libraries(pyopengv PRIVATE opengv pybind11::module)
 
 set_target_properties(pyopengv PROPERTIES
     PREFIX ""
-    SUFFIX ".so"
     CXX_STANDARD 11
     CXX_STANDARD_REQUIRED ON
 )
@@ -39,21 +36,16 @@ if(APPLE)
     set_target_properties(pyopengv PROPERTIES
         LINK_FLAGS "-undefined dynamic_lookup"
     )
-    target_link_libraries(pyopengv ${Boost_LIBRARIES})
-else()
-    target_link_libraries(pyopengv
-        ${Boost_LIBRARIES}
-        ${PYTHON_LIBRARIES}
-    )
 endif()
 
-# Find whether to install python libs in site-packages or dist-packages
-execute_process ( COMMAND
-    python -c "import distutils.sysconfig; print('dist-packages' if distutils.sysconfig.get_python_lib().endswith('dist-packages') else 'site-packages')"
-    OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
+# Find install path using the configured interpreter.
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" -c "import sysconfig; print(sysconfig.get_path('platlib'))"
+    OUTPUT_VARIABLE PYTHON_PLATLIB
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 set(PYTHON_INSTALL_DIR
-    "${CMAKE_INSTALL_PREFIX}/lib/python2.7/${PYTHON_SITE_PACKAGES}"
+    "${PYTHON_PLATLIB}"
     CACHE PATH "Path where to install pyopengv")
 
 install(TARGETS pyopengv DESTINATION "${PYTHON_INSTALL_DIR}")
