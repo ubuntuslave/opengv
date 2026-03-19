@@ -14,23 +14,6 @@
 
 #include "types.hpp"
 
-#ifndef USE_BOOST_PYTHON_NUMPY
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-#include <numpy/ndarrayobject.h>
-#endif
-
-/* Initialise numpy API and use 2/3 compatible return */
-#if (PY_VERSION_HEX < 0x03000000)
-static void numpy_import_array_wrapper() {
-  import_array();
-}
-#else
-static int numpy_import_array_wrapper() {
-  import_array();
-  return 0;
-}
-#endif
-
 
 
 namespace pyopengv {
@@ -860,12 +843,7 @@ bp::object triangulate2( ndarray &b1,
 BOOST_PYTHON_MODULE(pyopengv) {
   using namespace boost::python;
 
-#ifdef USE_BOOST_PYTHON_NUMPY
   boost::python::numpy::initialize();
-#else
-  boost::python::numeric::array::set_module_and_type("numpy", "ndarray");
-#endif
-  numpy_import_array_wrapper();
 
   def("absolute_pose_p2p", pyopengv::absolute_pose::p2p);
   def("absolute_pose_p3p_kneip", pyopengv::absolute_pose::p3p_kneip);

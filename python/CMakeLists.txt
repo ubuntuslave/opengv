@@ -14,19 +14,8 @@ else()
     set(Python_VERSION_SUFFIX "")
 endif()
 
-find_package(Boost REQUIRED COMPONENTS ${BOOST_PYTHON_COMPONENT})
-
-if(${Boost_VERSION} LESS 106300)
-    message("Not using boost/python/numpy.")
-    set(USE_BOOST_PYTHON_NUMPY "off")
-else()
-    message("Using boost/python/numpy.")
-    set(USE_BOOST_PYTHON_NUMPY "on")
-    add_definitions(-DUSE_BOOST_PYTHON_NUMPY)
-
-    find_package(Boost 1.63 REQUIRED COMPONENTS
-                 ${BOOST_PYTHON_COMPONENT} ${BOOST_NUMPY_COMPONENT})
-endif()
+find_package(Boost 1.63 REQUIRED COMPONENTS
+             ${BOOST_PYTHON_COMPONENT} ${BOOST_NUMPY_COMPONENT})
 
 include_directories(${Boost_INCLUDE_DIRS})
 
